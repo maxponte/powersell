@@ -1,3 +1,5 @@
+import org.decimal4j.util.DoubleRounder;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,6 +17,7 @@ public class Trader {
     double budget;
     int K;
     double rho;
+    DoubleRounder dr;
     Trader(int K, double rho, int step, double budget) {
         this.h = new History(K);
         V = new Payoff(K);
@@ -25,6 +28,9 @@ public class Trader {
         bid = new double[K];
         this.step = step;
         this.budget = budget;
+        double inc = (double)step / budget;
+        int precision = (int)Math.ceil(Math.log10(inc));
+        dr = new DoubleRounder(precision);
         observe(Collections.singletonList(new Spread(0, 0)));
     }
     void observe(List<Spread> lampi) {
@@ -152,7 +158,7 @@ public class Trader {
         for(int k = K; k >= 1; k--){
             bid[k-1] = w.get(k, budgetRemaining);
 //            System.out.println("we think the payoff is " + V.get(k, budgetRemaining));
-            budgetRemaining -= bid[k-1];
+            budgetRemaining = dr.round(budgetRemaining - bid[k-1]);
 //                System.out.println(V);
         }
 //        System.out.println(h);

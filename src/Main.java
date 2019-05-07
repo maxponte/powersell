@@ -85,10 +85,10 @@ public class Main {
         int K = 24;
         List<List<Spread>> prices = readPrices(K);
         int t = 0;
-        double rho = 0.05;
+        double rho = 0.005;
         Trader trader = new Trader(K, rho, 1000, 100);
         for(List<Spread> s : prices) {
-            if(t < 500) {
+            if(t < 100) {
                 trader.observe(s);
                 t++;
                 continue;
