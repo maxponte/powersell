@@ -9,6 +9,7 @@ public class Payoff {
         }
     }
     double get(int n, double budget) {
+        // TODO factor w/ Weights
         if(n == 0) return 0.0;
         NavigableMap<Double, Double> map = atBudgetByOption.get(n);
         Double maybe = map.get(budget);

@@ -40,9 +40,9 @@ public class Trader {
         Payoff rhat = new Payoff(K);
         observe(lampi);
 
-        for(int j = 0; j <= step; j++) {
-            V.put(0, (j*budget)/step, 0);
-        }
+//        for(int j = 0; j <= step; j++) {
+//            V.put(0, (j*budget)/step, 0);
+//        }
         for(int n = 1; n <= K; n++) {
             V.put(n, 0, 0);
             w.put(n, 0, 0);
@@ -51,6 +51,22 @@ public class Trader {
             int l = 2;
             int d = 0;
             int jp = step;
+
+            /*
+                Understanding what the statistics in OptionHistory provide:
+                    For each historical DA price (lambda) in ascending order,
+                        r = average daily profit if you always decide to buy when the price is at most lambda
+                        v = average squared daily profit at lambda, basically variance of buying at lambda
+                    Notably, there is:
+                        No sense of price trends over time
+                        No recursive sense of, hey, maybe I could decide to not ALWAYS buy up to the same maximum, regardless of what's going on
+                Overview for K = 1 case:
+                    For each possible budget $bdg < total budget,
+                    find the maximum historical day ahead price we can still afford,
+                    and estimate our payoff of spending as much of we can of this budget,
+                    as the payoff of buying at that DA [amend. there is some weird moving average thing here]
+                    Now, take the max payoff of spending at any budget $iBdg < $bdg, and bid $iBdg.
+             */
 
             // optimize w
             for(int j = 1; j <= step; j++) {
@@ -133,19 +149,18 @@ public class Trader {
                     }
                 }
             }
-
 //            System.out.println(w.toString());
-
-            // allocate w to bid vector
-            double budgetRemaining = budget;
-            bid = new double[K];
-            for(int k = K; k >= 1; k--){
-                bid[k-1] = w.get(k, budgetRemaining);
-                budgetRemaining -= bid[k-1];
-//                System.out.println(V);
-            }
         }
 
+        // allocate w to bid vector
+        double budgetRemaining = budget;
+        bid = new double[K];
+        for(int k = K; k >= 1; k--){
+            bid[k-1] = w.get(k, budgetRemaining);
+//            System.out.println("we think the payoff is " + V.get(k, budgetRemaining));
+            budgetRemaining -= bid[k-1];
+//                System.out.println(V);
+        }
 //        System.out.println(h);
     }
 }

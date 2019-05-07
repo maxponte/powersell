@@ -22,8 +22,8 @@ public class BidService {
                 System.out.println("account balance: " + accountSize);
             }
         }
-//        System.out.println("bidding");
-//        System.out.println(Arrays.toString(bids));
+        System.out.println("bidding");
+        System.out.println(Arrays.toString(bids));
         holdings = new int[K];
         holdingBids = new double[K];
         for (int i = 0; i < bids.length; i++) {

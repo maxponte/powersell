@@ -20,10 +20,11 @@ public class Main {
         h.add(s);
         System.out.println("Hello World!" + h.getDayAhead(1, 1));
     }
-    static List<Spread> readPrices() {
+    static List<List<Spread>> readPrices(int K) {
         String fileName = "/Users/ponte/Downloads/"+"da_rt_lmp_5021220.csv";
         // This will reference one line at a time
         String line = null;
+        List<List<Spread>> results = new ArrayList<>();
         List<Spread> result = new ArrayList<>();
 
         try {
@@ -36,15 +37,21 @@ public class Main {
                     new BufferedReader(fileReader);
 
             boolean first = true;
-            double yesterdaysDayAhead = 0.0;
+            double[] yesterdaysDayAhead = new double[K];
+            int i = 0;
             while((line = bufferedReader.readLine()) != null) {
                 if(first) {
                     first = false;
                     continue;
                 }
                 String[] s = line.split(",");
-                result.add(new Spread(Double.parseDouble(s[4]), yesterdaysDayAhead));
-                yesterdaysDayAhead = Double.parseDouble(s[8]);
+                result.add(new Spread(Double.parseDouble(s[4]), yesterdaysDayAhead[i]));
+                if(result.size() == K) {
+                    results.add(result);
+                    result = new ArrayList<>();
+                }
+                yesterdaysDayAhead[i] = Double.parseDouble(s[8]);
+                i = (i+1)%K;
             }
 
             // Always close files.
@@ -62,7 +69,7 @@ public class Main {
             // Or we could just do this:
             // ex.printStackTrace();
         }
-        return result;
+        return results;
     }
 //    static void testHistorySingle() {
 //        List<Spread> prices = readPrices();
@@ -75,18 +82,18 @@ public class Main {
 //        if(da2 != 3.940000057) System.out.println("fail2");
 //    }
     static void testTrader() {
-        List<Spread> prices = readPrices();
-        int K = 1;
+        int K = 24;
+        List<List<Spread>> prices = readPrices(K);
         int t = 0;
         double rho = 0.05;
-        Trader trader = new Trader(K, rho, 10000, 100);
-        for(Spread s : prices) {
+        Trader trader = new Trader(K, rho, 1000, 100);
+        for(List<Spread> s : prices) {
             if(t < 300) {
-                trader.observe(Collections.singletonList(s));
+                trader.observe(s);
                 t++;
                 continue;
             }
-            trader.trade(t, Collections.singletonList(s));
+            trader.trade(t, s);
             t++;
             if(t > 1000) break;
         }
