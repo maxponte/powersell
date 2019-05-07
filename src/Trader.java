@@ -40,13 +40,6 @@ public class Trader {
         Payoff rhat = new Payoff(K);
         observe(lampi);
 
-//        for(int j = 0; j <= step; j++) {
-//            V.put(0, (j*budget)/step, 0);
-//        }
-        for(int n = 1; n <= K; n++) {
-            V.put(n, 0, 0);
-            w.put(n, 0, 0);
-        }
         for(int n = 1; n <= K; n++) {
             int l = 2;
             int d = 0;
@@ -70,7 +63,7 @@ public class Trader {
 
             // optimize w
             for(int j = 1; j <= step; j++) {
-//                if(j % 10000 == 0) System.out.println("on step " + j);
+                if(j % 10000 == 0) System.out.println("on step " + j);
                 double bdg = (j*budget)/step;
 //                if(bdg == budget) {
 //                    System.out.println("full budget, d = "+ d);
@@ -132,11 +125,12 @@ public class Trader {
                 // now rhat tells us the best we could have done up to this pt
                 // in this step we build out V_n from V_(n-1)
                 double prev = V.get(n-1, bdg);
+                // if you can convert to hash map before this section, helps a lot
                 V.put(n, bdg, prev);
                 w.put(n, bdg, 0);
                 for(int i = 1; i <= Math.min(j, jp); i++) {
                     double iBdg = (i * budget) / step;
-                    double vg = V.get(n - 1, (j - i) * (budget / step));
+                    double vg = V.get(n - 1, ((j - i) * budget) / step);
                     double rg = rhat.get(n, iBdg);
                     double alt = vg + rg;
                     double existing = V.get(n, bdg);

@@ -1,26 +1,15 @@
 import java.util.*;
 
 public class Weights {
-    List<NavigableMap<Double, Double>> weightByOption;
+    List<HashMap<Double, Double>> weightByOption;
     Weights(int K) {
         weightByOption = new ArrayList<>();
         for (int n = 1; n <= K; n++) {
-            weightByOption.add(new TreeMap<>());
+            weightByOption.add(new HashMap<>());
         }
     }
     Double get(int n, double budget) {
-        if(n == 0) return 0.0;
-        NavigableMap<Double, Double> map = weightByOption.get(n-1);
-        Double maybe = map.get(budget);
-        if(maybe != null) return maybe;
-        double key = budget;
-        Double before = map.floorKey(key);
-        Double after = map.ceilingKey(key);
-        if (before == null) return after;
-        if (after == null) return before;
-        return (key - before < after - key
-                || after - key < 0)
-                && key - before > 0 ? before : after;
+        return weightByOption.get(n-1).get(budget);
     }
     void put(int n, double budget, double val) {
         weightByOption.get(n-1).put(budget, val);

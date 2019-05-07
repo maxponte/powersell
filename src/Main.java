@@ -88,7 +88,7 @@ public class Main {
         double rho = 0.05;
         Trader trader = new Trader(K, rho, 1000, 100);
         for(List<Spread> s : prices) {
-            if(t < 300) {
+            if(t < 500) {
                 trader.observe(s);
                 t++;
                 continue;
