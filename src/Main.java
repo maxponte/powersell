@@ -37,7 +37,7 @@ public class Main {
                     new BufferedReader(fileReader);
 
             boolean first = true;
-            double[] yesterdaysDayAhead = new double[K];
+            double[] yesterdaysRealTime = new double[K];
             int i = 0;
             while((line = bufferedReader.readLine()) != null) {
                 if(first) {
@@ -45,12 +45,12 @@ public class Main {
                     continue;
                 }
                 String[] s = line.split(",");
-                result.add(new Spread(Double.parseDouble(s[4]), yesterdaysDayAhead[i]));
+                result.add(new Spread(yesterdaysRealTime[i], Double.parseDouble(s[4])));
                 if(result.size() == K) {
                     results.add(result);
                     result = new ArrayList<>();
                 }
-                yesterdaysDayAhead[i] = Double.parseDouble(s[8]);
+                yesterdaysRealTime[i] = Double.parseDouble(s[8]);
                 i = (i+1)%K;
             }
 

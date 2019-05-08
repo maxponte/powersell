@@ -14,7 +14,8 @@ class OptionHistory {
     }
     // requires t > 0
     public void add(double dayAheadPrice, double realTimePrice) {
-        double payoff = realTimePrice - dayAheadPrice;
+//        double payoff = realTimePrice - dayAheadPrice;
+        double payoff = -realTimePrice + dayAheadPrice;
 
         int t = dayAheadPrices.size() + 1;
         if(t == 1) {
