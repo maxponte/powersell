@@ -10,7 +10,7 @@ import java.util.List;
 public class Main {
     static void testHistoryMulti() {
         int K = 7;
-        History h = new History(K);
+        History h = new History(K, 0.005);
         List<Integer> lambdas = Arrays.asList(1,2,3,5,8,13,21);
         List<Integer> pis = Arrays.asList(1,5,3,15,7,17,12);
         List<Spread> s = new ArrayList<>();
@@ -37,7 +37,7 @@ public class Main {
                     new BufferedReader(fileReader);
 
             boolean first = true;
-            double[] yesterdaysRealTime = new double[K];
+            double[] yesterdaysDayAhead = new double[K];
             int i = 0;
             while((line = bufferedReader.readLine()) != null) {
                 if(first) {
@@ -45,12 +45,12 @@ public class Main {
                     continue;
                 }
                 String[] s = line.split(",");
-                result.add(new Spread(yesterdaysRealTime[i], Double.parseDouble(s[4])));
+                result.add(new Spread(Double.parseDouble(s[4]), yesterdaysDayAhead[i]));
                 if(result.size() == K) {
                     results.add(result);
                     result = new ArrayList<>();
                 }
-                yesterdaysRealTime[i] = Double.parseDouble(s[8]);
+                yesterdaysDayAhead[i] = Double.parseDouble(s[8]);
                 i = (i+1)%K;
             }
 
@@ -85,14 +85,16 @@ public class Main {
         int K = 24;
         List<List<Spread>> prices = readPrices(K);
         int t = 0;
-        double rho = 0.005;
-        Trader trader = new Trader(K, rho, 1000, 100);
+        double rho = 0.05;
+        Trader trader = new Trader(K, rho, 2000, 200);
         for(List<Spread> s : prices) {
-            if(t < 100) {
+            if(t < 290) {
                 trader.observe(s);
                 t++;
                 continue;
             }
+//            trader.debug();
+//            break;
             trader.trade(t, s);
             t++;
             if(t > 1000) break;

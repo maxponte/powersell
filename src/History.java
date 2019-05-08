@@ -3,11 +3,13 @@ import java.util.List;
 
 class History {
     private List<OptionHistory> historyByOption;
-    public History(int K) {
+    double rho;
+    public History(int K, double rho) {
         historyByOption = new ArrayList<>();
         for(int k = 0; k < K; k++) {
             historyByOption.add(new OptionHistory());
         }
+        this.rho = rho;
     }
     public void add(List<Spread> spreadByOption) {
         int i = 0;
@@ -33,6 +35,13 @@ class History {
     }
     public double getMeanSquarePayoff(int l, int k) {
         return historyByOption.get(k-1).getMeanSquarePayoff(l);
+    }
+    public double getEstimatedPayoff(int t, int l, int k) {
+        double point = getMeanPayoff(l, k); // payoff associated with buying at lth highest DA price
+        double risk = (point*point)-getMeanSquarePayoff(l, k);
+        risk *= (t/t-1);
+        risk *= rho;
+        return point + risk;
     }
     public String toString() {
         StringBuilder sb = new StringBuilder();

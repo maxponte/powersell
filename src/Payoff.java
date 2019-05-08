@@ -9,16 +9,9 @@ public class Payoff {
         }
     }
     double get(int n, double budget) {
-        // TODO factor w/ Weights
         if(n == 0 || budget == 0.0) return 0.0;
         HashMap<Double, Double> map = atBudgetByOption.get(n);
         Double r = map.get(budget);
-//        if(r == null) {
-//            System.out.println("looking for "+budget);
-//            System.out.println(this);
-//            System.exit(0);
-//            return 0.0;
-//        }
         return r;
     }
     void put(int n, double budget, double val) {

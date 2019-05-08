@@ -12,10 +12,9 @@ class OptionHistory {
         meanPayoffs = new ArrayList<>();
         meanSquarePayoffs = new ArrayList<>();
     }
-    // requires t > 0
     public void add(double dayAheadPrice, double realTimePrice) {
-//        double payoff = realTimePrice - dayAheadPrice;
-        double payoff = -realTimePrice + dayAheadPrice;
+        double payoff = realTimePrice - dayAheadPrice;
+//        double payoff = -realTimePrice + dayAheadPrice;
 
         int t = dayAheadPrices.size() + 1;
         if(t == 1) {
@@ -35,7 +34,6 @@ class OptionHistory {
         idx--;
 
         // insert AFTER i_k
-        // TODO this is actually slow. use a tree
         dayAheadPrices.add(idx+1, dayAheadPrice);
 
         double meanPayoffAtIdx = idx >= 0 ? meanPayoffs.get(idx) : 0;
