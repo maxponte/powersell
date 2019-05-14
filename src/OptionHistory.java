@@ -11,18 +11,21 @@ class OptionHistory {
         dayAheadPrices = new ArrayList<>();
         meanPayoffs = new ArrayList<>();
         meanSquarePayoffs = new ArrayList<>();
+        dayAheadPrices.add(0.0);
+        meanPayoffs.add(0.0);
+        meanSquarePayoffs.add(0.0);
     }
     public void add(double dayAheadPrice, double realTimePrice) {
         double payoff = realTimePrice - dayAheadPrice;
 //        double payoff = -realTimePrice + dayAheadPrice;
 
         int t = dayAheadPrices.size() + 1;
-        if(t == 1) {
-            dayAheadPrices.add(dayAheadPrice);
-            meanPayoffs.add(payoff);
-            meanSquarePayoffs.add(payoff*payoff);
-            return;
-        }
+//        if(t == 1) {
+//            dayAheadPrices.add(dayAheadPrice);
+//            meanPayoffs.add(payoff);
+//            meanSquarePayoffs.add(payoff*payoff);
+//            return;
+//        }
 
         // i = i_k - 1
         int idx = 0;

@@ -1,24 +1,53 @@
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.io.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class Main {
-    static void testHistoryMulti() {
-        int K = 7;
-        History h = new History(K, 0.005);
-        List<Integer> lambdas = Arrays.asList(1,2,3,5,8,13,21);
-        List<Integer> pis = Arrays.asList(1,5,3,15,7,17,12);
-        List<Spread> s = new ArrayList<>();
-        for(int i = 0; i < K; i++) {
-            s.add(new Spread((double)pis.get(i), (double)lambdas.get(i)));
+    static void reformatLargeDataSet(String fileName, String outFileName) {
+        String line = null;
+        try {
+            FileReader fileReader = new FileReader(fileName);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            FileWriter fw = new FileWriter(outFileName);
+            BufferedWriter bw = new BufferedWriter(fw);
+            SimpleDateFormat infmt = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
+            SimpleDateFormat outfmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            bufferedReader.readLine(); // throw out 1st line
+            while((line = bufferedReader.readLine()) != null) {
+                String[] s = line.split(",", 10);
+                Date d = infmt.parse(s[0]);
+                String out = outfmt.format(d);
+                String nodeID = s[2];
+                String rt = s[4];
+                String da = s[8];
+                bw.write(out);
+                bw.write(",");
+                bw.write(nodeID);
+                bw.write(",");
+                bw.write(rt);
+                bw.write(",");
+                bw.write(da);
+                bw.newLine();
+            }
+            bufferedReader.close();
+            bw.close();
         }
-        h.add(s);
-        System.out.println("Hello World!" + h.getDayAhead(1, 1));
+        catch(FileNotFoundException ex) {
+            System.out.println(
+                    "Unable to open file '" +
+                            fileName + "'");
+        }
+        catch(IOException ex) {
+            System.out.println(
+                    "Error reading file '"
+                            + fileName + "'");
+        }
+        catch(ParseException pe) {
+            System.out.println(
+                    "Error parsing date '"
+                            + line + "'");
+        }
     }
     static List<List<Spread>> readPrices(int K) {
         String fileName = "/Users/ponte/Downloads/"+"da_rt_lmp_5021220.csv";
@@ -45,10 +74,12 @@ public class Main {
                     continue;
                 }
                 String[] s = line.split(",");
-                result.add(new Spread(Double.parseDouble(s[4]), yesterdaysDayAhead[i]));
-                if(result.size() == K) {
-                    results.add(result);
-                    result = new ArrayList<>();
+                if(yesterdaysDayAhead[i] > 0.0) {
+                    result.add(new Spread(Double.parseDouble(s[4]), yesterdaysDayAhead[i]));
+                    if (result.size() == K) {
+                        results.add(result);
+                        result = new ArrayList<>();
+                    }
                 }
                 yesterdaysDayAhead[i] = Double.parseDouble(s[8]);
                 i = (i+1)%K;
@@ -71,21 +102,11 @@ public class Main {
         }
         return results;
     }
-//    static void testHistorySingle() {
-//        List<Spread> prices = readPrices();
-//        int K = 1;
-//        History h = new History(K);
-//        h.addBulk(Collections.singletonList(prices));
-//        double da = h.getDayAhead(1, 1);
-//        double da2 = h.getDayAhead(2, 1);
-//        if(da != 3.630000114) System.out.println("fail1");
-//        if(da2 != 3.940000057) System.out.println("fail2");
-//    }
     static void testTrader() {
         int K = 24;
         List<List<Spread>> prices = readPrices(K);
         int t = 0;
-        double rho = 0.05;
+        double rho = 0.005;
         Trader trader = new Trader(K, rho, 2000, 200);
         for(List<Spread> s : prices) {
             if(t < 290) {
@@ -100,8 +121,31 @@ public class Main {
             if(t > 1000) break;
         }
     }
+    static void testUCTrader() {
+        int K = 24;
+        List<List<Spread>> prices = readPrices(K);
+        int t = 0;
+        double rho = 0.000;
+        UnconstrainedTrader trader = new UnconstrainedTrader(K, rho, 2000, 200);
+        for(List<Spread> s : prices) {
+            if(t < 290) {
+                trader.observe(s);
+                t++;
+                continue;
+            }
+//            trader.debug();
+//            break;
+            trader.trade(t, s);
+            t++;
+            if(t > 1000) break;
+        }
+    }
     public static void main(String[] args) {
-//        testHistorySingle();
-        testTrader();
+//        testTrader();
+        testUCTrader();
+//        testFileMap();
+//        String fileName = "/Users/ponte/dpds_data/all.csv";
+//        String outFileName = "/Users/ponte/dpds_data/fmt_all.csv";
+//        reformatLargeDataSet(fileName, outFileName);
     }
 }

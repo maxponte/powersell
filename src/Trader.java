@@ -44,13 +44,13 @@ public class Trader {
 
         // calculate estimated payoffs for each option, for all budgets
         for(int n = 1; n <= K; n++) {
-            int l = 2;
-            int d = 0;
+            int l = 2; // why 2??? falsely attributes payoffs right???
+            boolean d = false;
             int jp = step;
             for(int j = 1; j <= step; j++) {
                 double bdg = (j*budget)/step;
                 // what's the payoff if we're willing to buy at the max affordable price within $bdg
-                for(; d == 0; l++) {
+                for(; !d; l++) {
                     // k = K - n + 1
                     Double lam = h.getDayAhead(l, K-n+1);
                     if(lam > bdg) {
@@ -59,7 +59,7 @@ public class Trader {
                     }
                     if(l == t+1) {
                         rhat.put(n, bdg, h.getEstimatedPayoff(t, l, K-n+1));
-                        d = 1;
+                        d = true;
                         jp = j;
                         break;
                     }

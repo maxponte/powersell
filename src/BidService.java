@@ -17,6 +17,40 @@ public class BidService {
         holdingPrices = new double[K];
         this.K = K;
     }
+    void bidMultis(List<Double> bids, List<Integer> bidOptions, List<Spread> lampi, double budget) {
+        leftoverBudgetMoney += budget;
+        // sell holdings
+        for (int i = 0; i < holdings.length; i++) {
+            if(holdings[i] > 0) {
+                // sell
+                double actualPayoff = (holdings[i] * lampi.get(i).realTimePrice) - holdingPrices[i];
+//                System.out.println("we sold " + i + " and got paid "+ actualPayoff);
+                earnings += actualPayoff;
+            }
+        }
+        days++;
+        System.out.println("on day: " + days);
+        System.out.println("earnings: " + dr.round(earnings));
+        System.out.println("cost: " + dr.round(costBasis));
+        System.out.println("budget leftovers: " + dr.round(leftoverBudgetMoney));
+//        System.out.println("next bid: " + Arrays.toString(bids));
+        holdings = new int[K];
+        holdingPrices = new double[K];
+//        System.out.println("n bids " + bids.size());
+        for (int i = 0; i < bids.size(); i++) {
+            int kIdx = bidOptions.get(i) - 1;
+            double ourBid = bids.get(i);
+//            System.out.println("kIdx: " + kIdx + ", bidding " + ourBid);
+            double assetPrice = lampi.get(kIdx).dayAheadPrice;
+            if(ourBid >= assetPrice) {
+//                System.out.println("we bought "+ i);
+                holdings[kIdx]++;
+                holdingPrices[kIdx] += assetPrice;
+                leftoverBudgetMoney -= assetPrice;
+                costBasis += assetPrice;
+            }
+        }
+    }
     void bid(double[] bids, List<Spread> lampi, double budget) {
         leftoverBudgetMoney += budget;
         // sell holdings
