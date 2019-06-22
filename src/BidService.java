@@ -53,6 +53,7 @@ public class BidService {
                     holdings.put(optionID, 0);
                     holdingCosts.put(optionID, 0.0);
                 }
+                // why is this yesterday?
                 double assetPrice = s.dayAheadPrice;
                 if(bidPolicy >= assetPrice) {
                     holdings.put(optionID, holdings.get(optionID)+1);

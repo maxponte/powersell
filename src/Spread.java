@@ -21,6 +21,6 @@ public class Spread {
 
     @Override
     public String toString() {
-        return "pi: " + realTimePrice + ", lambda: " + dayAheadPrice;
+        return "pi: " + realTimePrice + ", lambda: " + dayAheadPrice + ", nodeID: " + nodeID + ", hour: " + hour + ", afp: " + availableForPurchase;
     }
 }

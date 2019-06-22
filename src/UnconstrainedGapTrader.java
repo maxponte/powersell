@@ -49,6 +49,8 @@ public class UnconstrainedGapTrader {
         // it's okay to do this prior to bidding
         // gives us a mapping from this local k in K, to the absolute position in OptionHistory
         List<Integer> kMap = observe(lampi);
+        System.out.println("ok");
+        System.out.println(h);
 
         // this is the bid from yesterday's data
         // assuming fixed K. needs changes
@@ -58,6 +60,10 @@ public class UnconstrainedGapTrader {
 
         if(t > 1) bidsvc.bidMultis(bidPolicies, lampi, budget);
 
+        int K = kMap.size();
+        if(K < 1) {
+            return;
+        }
         // calculate estimated payoffs for each option, for all budgets
         Payoff rhat = new Payoff(K);
         int[] jp = new int[K];
@@ -69,15 +75,15 @@ public class UnconstrainedGapTrader {
                 // what's the payoff if we're willing to buy at the max affordable price within $bdg
                 for (int l = 2; !d; l++) {
                     // k = K - n + 1
-                    Double lam = h.getDayAhead(l, kMap.get(K - n + 1));
+                    Double lam = h.getDayAhead(l, kMap.get(K - n));
                     if (lam > bdg) {
-                        double payoff = h.getEstimatedPayoff(t, l - 1, kMap.get(K - n + 1));
+                        double payoff = h.getEstimatedPayoff(t, l - 1, kMap.get(K - n));
                         if(l > 1) rhat.put(n, bdg, payoff);
                         else rhat.put(n, bdg, 0);
                         break;
                     }
                     if (l == t + 1) {
-                        rhat.put(n, bdg, h.getEstimatedPayoff(t, l, kMap.get(K - n + 1)));
+                        rhat.put(n, bdg, h.getEstimatedPayoff(t, l, kMap.get(K - n)));
                         d = true;
                         jp[n-1] = j;
                         break;

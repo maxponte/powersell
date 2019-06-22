@@ -62,7 +62,7 @@ public class Main {
             FileReader fileReader = new FileReader(fileName);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             SimpleDateFormat datefmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-            int cdom = -1;
+            Map<Integer, Integer> dayOfMonth = new HashMap<>();
             Map<Integer, double[]> daPricesYesterday = new HashMap<>();
             Map<Integer, double[]> daPricesToday = new HashMap<>();
             Map<Integer, Spread[]> spreadsYesterday = new HashMap<>();
@@ -86,9 +86,10 @@ public class Main {
                 double rt = Double.parseDouble(s[2]);
                 double da = Double.parseDouble(s[3]);
                 int dom = d.getDate();
-                if(dom != cdom) {
+                Integer cdom = dayOfMonth.get(nodeID);
+                if(cdom == null || dom != cdom) {
                     // a new day
-                    if(cdom != -1) {
+                    if(cdom != null) {
                         results.add(result);
                         result = new ArrayList<>();
                     }
@@ -96,7 +97,7 @@ public class Main {
                     daPricesToday.put(nodeID, new double[24]);
                     spreadsYesterday.put(nodeID, spreadsToday.get(nodeID));
                     spreadsToday.put(nodeID, new Spread[24]);
-                    cdom = dom;
+                    dayOfMonth.put(nodeID, dom);
                 }
                 int hrs = d.getHours();
                 daPricesToday.get(nodeID)[hrs] = da;
@@ -134,63 +135,6 @@ public class Main {
         }
         return results;
     }
-    // make a separate class that handles this
-    // fmt: timestamp, id, realtime, dayahead
-    // input: data with missing rows
-    // output: (t2, id, realtime_t1, realtime_t2) where t2 = t1 + 1 day and data for t1 exists
-    static List<List<Spread>> readPrices(int K) {
-        String fileName = "/Users/ponte/Downloads/"+"da_rt_lmp_5021220.csv";
-        // This will reference one line at a time
-        String line = null;
-        List<List<Spread>> results = new ArrayList<>();
-        List<Spread> result = new ArrayList<>();
-
-        try {
-            // FileReader reads text files in the default encoding.
-            FileReader fileReader =
-                    new FileReader(fileName);
-
-            // Always wrap FileReader in BufferedReader.
-            BufferedReader bufferedReader =
-                    new BufferedReader(fileReader);
-
-            boolean first = true;
-            double[] yesterdaysDayAhead = new double[K];
-            int i = 0;
-            while((line = bufferedReader.readLine()) != null) {
-                if(first) {
-                    first = false;
-                    continue;
-                }
-                String[] s = line.split(",");
-                if(yesterdaysDayAhead[i] > 0.0) {
-                    result.add(new Spread(Double.parseDouble(s[4]), yesterdaysDayAhead[i]));
-                    if (result.size() == K) {
-                        results.add(result);
-                        result = new ArrayList<>();
-                    }
-                }
-                yesterdaysDayAhead[i] = Double.parseDouble(s[8]);
-                i = (i+1)%K;
-            }
-
-            // Always close files.
-            bufferedReader.close();
-        }
-        catch(FileNotFoundException ex) {
-            System.out.println(
-                    "Unable to open file '" +
-                            fileName + "'");
-        }
-        catch(IOException ex) {
-            System.out.println(
-                    "Error reading file '"
-                            + fileName + "'");
-            // Or we could just do this:
-            // ex.printStackTrace();
-        }
-        return results;
-    }
     static void testUCGapTrader() {
         int K = 24;
         String fn = "/Users/ponte/dpds_data/test.csv";
@@ -199,11 +143,11 @@ public class Main {
         double rho = 0.000;
         UnconstrainedGapTrader trader = new UnconstrainedGapTrader(K, rho, 2000, 200);
         for(List<Spread> s : prices) {
-            if(t < 290) {
-                trader.observe(s);
-                t++;
-                continue;
-            }
+//            if(t < 290) {
+//                trader.observe(s);
+//                t++;
+//                continue;
+//            }
 //            trader.debug();
 //            break;
             trader.trade(t, s, 200);
@@ -218,12 +162,18 @@ public class Main {
     }
     static void testReadMappedFile() {
         String fn = "/Users/ponte/dpds_data/test.csv";
-        readLargeDataset(fn);
+        List<List<Spread>> ls = readLargeDataset(fn);
+        for(List<Spread> l : ls) {
+            for(Spread s : l) {
+                System.out.println(s);
+            }
+        }
     }
     public static void main(String[] args) {
 //        testTrader();
 //        testUCTrader();
 //        testFileMap();
-        testReadMappedFile();
+//        testReadMappedFile();
+        testUCGapTrader();
     }
 }
