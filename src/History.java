@@ -1,22 +1,41 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 class History {
     private List<OptionHistory> historyByOption;
     double rho;
+    Map<Integer, int[]> nodeIDPositions; // maps nodeID => for each hour in the day, the index of the OptionHistory associated with this node, at this time of day
     public History(int K, double rho) {
+        nodeIDPositions = new HashMap<>();
         historyByOption = new ArrayList<>();
         for(int k = 0; k < K; k++) {
             historyByOption.add(new OptionHistory());
         }
         this.rho = rho;
     }
-    public void add(List<Spread> spreadByOption) {
-        int i = 0;
+    public List<Integer> add(List<Spread> spreadByOption) {
+        List<Integer> mapping = new ArrayList<>();
         for(Spread s : spreadByOption) {
-            historyByOption.get(i).add(s.dayAheadPrice, s.realTimePrice);
-            i++;
+            int idx;
+            int[] posMap = nodeIDPositions.get(s.nodeID);
+            if(posMap != null && posMap[s.hour] > 0) {
+                idx = posMap[s.hour]-1;
+            } else {
+                if(posMap == null) {
+                    nodeIDPositions.put(s.nodeID, new int[24]); // getting super messy...
+                    // you need to make the distinction between all these pieces clear
+                    // that we're mapping (nodeID, hour in day) => integer IDs
+                }
+                idx = historyByOption.size();
+                historyByOption.add(new OptionHistory());
+                nodeIDPositions.get(s.nodeID)[s.hour] = idx+1;
+            }
+            historyByOption.get(idx).add(s.dayAheadPrice, s.realTimePrice);
+            mapping.add(idx);
         }
+        return mapping;
     }
     public void addBulk(List<List<Spread>> spreadsByOption) {
         int i = 0;

@@ -2,7 +2,7 @@ import org.decimal4j.util.DoubleRounder;
 
 import java.util.*;
 
-public class UnconstrainedTrader {
+public class UnconstrainedGapTrader {
     History h; // statistics
     Payoff V; // max payoff for each budget x option
     BidService bidsvc; // takes orders
@@ -17,7 +17,7 @@ public class UnconstrainedTrader {
     double budget; // daily budget
     int K; // number of options. |nodes| * |hours in the day|
     DoubleRounder dr;
-    UnconstrainedTrader(int K, double rho, int step, double budget) {
+    UnconstrainedGapTrader(int K, double rho, int step, double budget) {
         this.K = K;
         this.step = step;
         this.budget = budget;
@@ -33,16 +33,17 @@ public class UnconstrainedTrader {
         int precision = (int)Math.ceil(Math.log10(inc));
         dr = new DoubleRounder(precision);
     }
-    void observe(List<Spread> lampi) {
-        h.add(lampi);
-//        System.out.println("observing");
-//        System.out.println(Arrays.toString(lampi.toArray()));
-    }
+//    void observe(List<Spread> lampi) {
+//        h.add(lampi);
+////        System.out.println("observing");
+////        System.out.println(Arrays.toString(lampi.toArray()));
+//    }
     void trade(int t, List<Spread> lampi, double budget) {
         // this is the bid from yesterday's data
         if(t > 1) bidsvc.bidMultis(bids, bidOptions, lampi, budget);
 
-        observe(lampi);
+        // gives us a mapping from this local k in K, to the absolute position in OptionHistory
+        List<Integer> kMap = h.add(lampi);
 
         // calculate estimated payoffs for each option, for all budgets
         Payoff rhat = new Payoff(K);
@@ -59,15 +60,15 @@ public class UnconstrainedTrader {
 //                }
                 for (int l = 2; !d; l++) {
                     // k = K - n + 1
-                    Double lam = h.getDayAhead(l, K - n + 1);
+                    Double lam = h.getDayAhead(l, kMap.get(K - n + 1));
                     if (lam > bdg) {
-                        double payoff = h.getEstimatedPayoff(t, l - 1, K - n + 1);
+                        double payoff = h.getEstimatedPayoff(t, l - 1, kMap.get(K - n + 1));
                         if(l > 1) rhat.put(n, bdg, payoff);
                         else rhat.put(n, bdg, 0);
                         break;
                     }
                     if (l == t + 1) {
-                        rhat.put(n, bdg, h.getEstimatedPayoff(t, l, K - n + 1));
+                        rhat.put(n, bdg, h.getEstimatedPayoff(t, l, kMap.get(K - n + 1)));
                         d = true;
                         jp[n-1] = j;
                         break;
@@ -91,7 +92,7 @@ public class UnconstrainedTrader {
                     if (existing < alt) { // V_n(bdg) = max(V_n(bdg), alt)
 //                        System.out.println((K-n+1) + ", " + iBdg + ", " + rg);
                         V.put(1, bdg, alt);
-                        witness.put(bdg, new AbstractMap.SimpleEntry<>(iBdg, K-n+1));
+                        witness.put(bdg, new AbstractMap.SimpleEntry<>(iBdg, kMap.get(K-n+1)));
                     }
                 }
             }

@@ -49,6 +49,72 @@ public class Main {
                             + line + "'");
         }
     }
+    static List<List<Spread>> readLargeDataset(String fileName) {
+        List<List<Spread>> results = new ArrayList<>();
+        List<Spread> result = new ArrayList<>();
+        String line = null;
+        try {
+            FileReader fileReader = new FileReader(fileName);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            SimpleDateFormat datefmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            int cdom = -1;
+            Map<Integer, double[]> daPricesYesterday = new HashMap<>();
+            Map<Integer, double[]> daPricesToday = new HashMap<>();
+            while((line = bufferedReader.readLine()) != null) {
+                String[] s = line.split(",", 4);
+                Date d = datefmt.parse(s[0]);
+                int nodeID = Integer.parseInt(s[1]);
+                if(daPricesToday.get(nodeID) == null) {
+                    daPricesToday.put(nodeID, new double[24]);
+                }
+                if(daPricesYesterday.get(nodeID) == null) {
+                    daPricesYesterday.put(nodeID, new double[24]);
+                }
+                double rt = Double.parseDouble(s[2]);
+                double da = Double.parseDouble(s[3]);
+                int dom = d.getDate();
+                if(dom != cdom) {
+                    // a new day
+                    if(cdom != -1) {
+                        results.add(result);
+                        result = new ArrayList<>();
+                    }
+                    daPricesYesterday.put(nodeID, daPricesToday.get(nodeID));
+                    daPricesToday.put(nodeID, new double[24]);
+                    cdom = dom;
+                }
+                int hrs = d.getHours();
+                daPricesToday.get(nodeID)[hrs] = da;
+                double daPriceYesterday = daPricesYesterday.get(nodeID)[hrs];
+                if(daPriceYesterday > 0.0) {
+                    Spread spr = new Spread(d, nodeID, rt, daPriceYesterday);
+                    result.add(spr);
+                }
+            }
+            results.add(result);
+            bufferedReader.close();
+        }
+        catch(FileNotFoundException ex) {
+            System.out.println(
+                    "Unable to open file '" +
+                            fileName + "'");
+        }
+        catch(IOException ex) {
+            System.out.println(
+                    "Error reading file '"
+                            + fileName + "'");
+        }
+        catch(ParseException pe) {
+            System.out.println(
+                    "Error parsing date '"
+                            + line + "'");
+        }
+        return results;
+    }
+    // make a separate class that handles this
+    // fmt: timestamp, id, realtime, dayahead
+    // input: data with missing rows
+    // output: (t2, id, realtime_t1, realtime_t2) where t2 = t1 + 1 day and data for t1 exists
     static List<List<Spread>> readPrices(int K) {
         String fileName = "/Users/ponte/Downloads/"+"da_rt_lmp_5021220.csv";
         // This will reference one line at a time
@@ -135,17 +201,44 @@ public class Main {
             }
 //            trader.debug();
 //            break;
-            trader.trade(t, s);
+            trader.trade(t, s, 200);
             t++;
             if(t > 1000) break;
         }
     }
+    static void testUCGapTrader() {
+        int K = 24;
+        String fn = "/Users/ponte/dpds_data/test.csv";
+        List<List<Spread>> prices = readLargeDataset(fn);
+        int t = 0;
+        double rho = 0.000;
+        UnconstrainedTrader trader = new UnconstrainedTrader(K, rho, 2000, 200);
+        for(List<Spread> s : prices) {
+            if(t < 290) {
+                trader.observe(s);
+                t++;
+                continue;
+            }
+//            trader.debug();
+//            break;
+            trader.trade(t, s, 200);
+            t++;
+            if(t > 1000) break;
+        }
+    }
+    static void testFileMap() {
+        String fileName = "/Users/ponte/dpds_data/all.csv";
+        String outFileName = "/Users/ponte/dpds_data/fmt_all.csv";
+        reformatLargeDataSet(fileName, outFileName);
+    }
+    static void testReadMappedFile() {
+        String fn = "/Users/ponte/dpds_data/test.csv";
+        readLargeDataset(fn);
+    }
     public static void main(String[] args) {
 //        testTrader();
-        testUCTrader();
+//        testUCTrader();
 //        testFileMap();
-//        String fileName = "/Users/ponte/dpds_data/all.csv";
-//        String outFileName = "/Users/ponte/dpds_data/fmt_all.csv";
-//        reformatLargeDataSet(fileName, outFileName);
+        testReadMappedFile();
     }
 }
