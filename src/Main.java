@@ -49,6 +49,11 @@ public class Main {
                             + line + "'");
         }
     }
+    // generates a list of days
+    // each day is a list of spreads containing:
+    // real time price on that day
+    // corresponding day ahead price on previous day
+    // nodeID
     static List<List<Spread>> readLargeDataset(String fileName) {
         List<List<Spread>> results = new ArrayList<>();
         List<Spread> result = new ArrayList<>();
@@ -60,6 +65,8 @@ public class Main {
             int cdom = -1;
             Map<Integer, double[]> daPricesYesterday = new HashMap<>();
             Map<Integer, double[]> daPricesToday = new HashMap<>();
+            Map<Integer, Spread[]> spreadsYesterday = new HashMap<>();
+            Map<Integer, Spread[]> spreadsToday = new HashMap<>();
             while((line = bufferedReader.readLine()) != null) {
                 String[] s = line.split(",", 4);
                 Date d = datefmt.parse(s[0]);
@@ -69,6 +76,12 @@ public class Main {
                 }
                 if(daPricesYesterday.get(nodeID) == null) {
                     daPricesYesterday.put(nodeID, new double[24]);
+                }
+                if(spreadsYesterday.get(nodeID) == null) {
+                    spreadsYesterday.put(nodeID, new Spread[24]);
+                }
+                if(spreadsToday.get(nodeID) == null) {
+                    spreadsToday.put(nodeID, new Spread[24]);
                 }
                 double rt = Double.parseDouble(s[2]);
                 double da = Double.parseDouble(s[3]);
@@ -81,13 +94,23 @@ public class Main {
                     }
                     daPricesYesterday.put(nodeID, daPricesToday.get(nodeID));
                     daPricesToday.put(nodeID, new double[24]);
+                    spreadsYesterday.put(nodeID, spreadsToday.get(nodeID));
+                    spreadsToday.put(nodeID, new Spread[24]);
                     cdom = dom;
                 }
                 int hrs = d.getHours();
                 daPricesToday.get(nodeID)[hrs] = da;
                 double daPriceYesterday = daPricesYesterday.get(nodeID)[hrs];
                 if(daPriceYesterday > 0.0) {
+                    // there is a real time price today,
+                    // look up matching k from yesterday,
+                    // and set availableForPurchase flag
                     Spread spr = new Spread(d, nodeID, rt, daPriceYesterday);
+                    spreadsToday.get(nodeID)[hrs] = spr;
+                    Spread ySpr = spreadsYesterday.get(nodeID)[hrs];
+                    if(ySpr != null) {
+                        ySpr.availableForPurchase = true;
+                    }
                     result.add(spr);
                 }
             }
@@ -168,51 +191,13 @@ public class Main {
         }
         return results;
     }
-    static void testTrader() {
-        int K = 24;
-        List<List<Spread>> prices = readPrices(K);
-        int t = 0;
-        double rho = 0.005;
-        Trader trader = new Trader(K, rho, 2000, 200);
-        for(List<Spread> s : prices) {
-            if(t < 290) {
-                trader.observe(s);
-                t++;
-                continue;
-            }
-//            trader.debug();
-//            break;
-            trader.trade(t, s);
-            t++;
-            if(t > 1000) break;
-        }
-    }
-    static void testUCTrader() {
-        int K = 24;
-        List<List<Spread>> prices = readPrices(K);
-        int t = 0;
-        double rho = 0.000;
-        UnconstrainedTrader trader = new UnconstrainedTrader(K, rho, 2000, 200);
-        for(List<Spread> s : prices) {
-            if(t < 290) {
-                trader.observe(s);
-                t++;
-                continue;
-            }
-//            trader.debug();
-//            break;
-            trader.trade(t, s, 200);
-            t++;
-            if(t > 1000) break;
-        }
-    }
     static void testUCGapTrader() {
         int K = 24;
         String fn = "/Users/ponte/dpds_data/test.csv";
         List<List<Spread>> prices = readLargeDataset(fn);
         int t = 0;
         double rho = 0.000;
-        UnconstrainedTrader trader = new UnconstrainedTrader(K, rho, 2000, 200);
+        UnconstrainedGapTrader trader = new UnconstrainedGapTrader(K, rho, 2000, 200);
         for(List<Spread> s : prices) {
             if(t < 290) {
                 trader.observe(s);

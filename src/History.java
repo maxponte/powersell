@@ -15,6 +15,11 @@ class History {
         }
         this.rho = rho;
     }
+    public int getOptionID(int nodeID, int hour) {
+        return nodeIDPositions.get(nodeID)[hour]-1;
+    }
+    // returns a list of option indices into History corresponding to tradeable options
+    // meaning the real time price tomorrow exists aka "availableForPurchase"
     public List<Integer> add(List<Spread> spreadByOption) {
         List<Integer> mapping = new ArrayList<>();
         for(Spread s : spreadByOption) {
@@ -33,7 +38,7 @@ class History {
                 nodeIDPositions.get(s.nodeID)[s.hour] = idx+1;
             }
             historyByOption.get(idx).add(s.dayAheadPrice, s.realTimePrice);
-            mapping.add(idx);
+            if(s.availableForPurchase) mapping.add(idx);
         }
         return mapping;
     }

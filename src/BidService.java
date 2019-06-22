@@ -1,29 +1,34 @@
 import org.decimal4j.util.DoubleRounder;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class BidService {
-    List<Integer> holdings;
-    List<Double> holdingPrices;
+    Map<Integer, Integer> holdings;
+    Map<Integer, Double> holdingCosts;
     int K;
     double earnings = 0.0;
     double leftoverBudgetMoney = 0.0;
     double costBasis = 0.0;
     int days = 0;
     DoubleRounder dr = new DoubleRounder(2);
-    BidService(int K) {
-        holdings = new ArrayList<>();
-        holdingPrices = new ArrayList<>();
+    History history;
+    BidService(int K, History h) {
+        holdings = new HashMap<>();
+        holdingCosts = new HashMap<>();
+        history = h;
     }
-    void bidMultis(List<Double> bids, List<Integer> bidOptions, List<Spread> lampi, double budget) {
+    void bidMultis(Map<Integer, Double> bidPolicies, List<Spread> lampi, double budget) {
+        // bidOptions gives you the absolute index of the option within History
         leftoverBudgetMoney += budget;
         // sell holdings
-        for (int i = 0; i < holdings.size(); i++) {
-            if(holdings.get(i) > 0) {
+        for (int i = 0; i < lampi.size(); i++) {
+            Spread s = lampi.get(i);
+            int optionID = history.getOptionID(s.nodeID, s.hour);
+            Integer holdingUnits = holdings.get(optionID);
+            Double holdingCost = holdingCosts.get(optionID);
+            if(holdingUnits != null) {
                 // sell
-                double actualPayoff = (holdings.get(i) * lampi.get(i).realTimePrice) - holdingPrices.get(i);
+                double actualPayoff = (holdingUnits * s.realTimePrice) - holdingCost;
 //                System.out.println("we sold " + i + " and got paid "+ actualPayoff);
                 earnings += actualPayoff;
             }
@@ -34,20 +39,27 @@ public class BidService {
         System.out.println("cost: " + dr.round(costBasis));
         System.out.println("budget leftovers: " + dr.round(leftoverBudgetMoney));
 //        System.out.println("next bid: " + Arrays.toString(bids));
-        holdings = new ArrayList<>();
-        holdingPrices = new ArrayList<>();
+        holdings = new HashMap<>();
+        holdingCosts = new HashMap<>();
 //        System.out.println("n bids " + bids.size());
-        for (int i = 0; i < bids.size(); i++) {
-            int kIdx = bidOptions.get(i) - 1;
-            double ourBid = bids.get(i);
-//            System.out.println("kIdx: " + kIdx + ", bidding " + ourBid);
-            double assetPrice = lampi.get(kIdx).dayAheadPrice;
-            if(ourBid >= assetPrice) {
-//                System.out.println("we bought "+ i);
-                holdings.set(kIdx, holdings.get(kIdx)+1);
-                holdingPrices.set(kIdx, holdingPrices.get(kIdx) + assetPrice);
-                leftoverBudgetMoney -= assetPrice;
-                costBasis += assetPrice;
+
+        // buy
+        for (int i = 0; i < lampi.size(); i++) {
+            Spread s = lampi.get(i);
+            int optionID = history.getOptionID(s.nodeID, s.hour);
+            Double bidPolicy = bidPolicies.get(optionID);
+            if(bidPolicy != null) {
+                if(holdings.get(optionID) == null) {
+                    holdings.put(optionID, 0);
+                    holdingCosts.put(optionID, 0.0);
+                }
+                double assetPrice = s.dayAheadPrice;
+                if(bidPolicy >= assetPrice) {
+                    holdings.put(optionID, holdings.get(optionID)+1);
+                    holdingCosts.put(optionID, holdingCosts.get(optionID) + assetPrice);
+                    leftoverBudgetMoney -= assetPrice;
+                    costBasis += assetPrice;
+                }
             }
         }
     }

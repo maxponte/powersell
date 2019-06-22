@@ -6,6 +6,7 @@ public class Spread {
     int nodeID;
     Date date;
     int hour;
+    boolean availableForPurchase = false;
     public Spread(double pi, double lambda) {
         realTimePrice = pi;
         dayAheadPrice = lambda;
