@@ -9,10 +9,7 @@ public class UnconstrainedTrader {
     BidService bidsvc; // takes orders
 
     // this stuff replaces "w" in Trader
-    // list of max prices
-    List<Double> bids;
-    // corresponding list of options to buy
-    List<Integer> bidOptions;
+    List<BidPolicy> bids;
 
     double precision;
     int K; // number of options. |nodes| * |hours in the day|
@@ -24,10 +21,8 @@ public class UnconstrainedTrader {
         h = new History(K, rho);
 
         V = new Payoff(1); // unconstrained just needs a by budget payoff
-        bidsvc = new BidService(K);
-        bidsvc.accountBalance = startingBalance;
+        bidsvc = new BidService(K, startingBalance);
         bids = new ArrayList<>();
-        bidOptions = new ArrayList<>();
 
         dr = new DoubleRounder(precision);
     }
@@ -56,7 +51,7 @@ public class UnconstrainedTrader {
         // this is the bid from yesterday's data
         double doubleBudget = bidsvc.accountBalance;
         if(t > 1) {
-            doubleBudget = bidsvc.bidMultis(bids, bidOptions, lampi);
+            doubleBudget = bidsvc.bidMultis(bids, lampi);
         }
         double inflateFactor = Math.pow(10, 2-precision);
         int step = (int)dr.round(doubleBudget * inflateFactor, RoundingMode.DOWN);
@@ -96,7 +91,7 @@ public class UnconstrainedTrader {
             }
         }
 
-        HashMap<Integer, AbstractMap.SimpleEntry<Integer, Integer>> witness = new HashMap<>();
+        HashMap<Integer, BidPolicy> witness = new HashMap<>();
         for(int j = 1; j <= step; j++) {
 //            double bdg = (j * budget) / step;
             int bdg = j;
@@ -117,7 +112,11 @@ public class UnconstrainedTrader {
 //                        System.out.println((K-n+1) + ", " + iBdg + ", " + rg);
                         V.put(1, bdg, alt);
 //                        System.out.println("recommending " + (K-n+1) + " at " + iBdg + " for " + rg);
-                        witness.put(bdg, new AbstractMap.SimpleEntry<>(iBdg, K-n+1));
+                        BidPolicy bp = new BidPolicy();
+                        bp.maxBid = iBdg;
+                        bp.optionID = K-n+1;
+                        bp.expectedPayoff = rg;
+                        witness.put(bdg, bp);
 //                        System.out.println("k");
                     }
                 }
@@ -125,16 +124,13 @@ public class UnconstrainedTrader {
         }
 
         bids = new ArrayList<>();
-        bidOptions = new ArrayList<>();
         int budgetRemaining = step;
 //        System.out.println(V);
-        AbstractMap.SimpleEntry bidPolicy = witness.get(budgetRemaining);
+        BidPolicy bidPolicy = witness.get(budgetRemaining);
         while(bidPolicy != null) {
-            Integer bid = (Integer)bidPolicy.getKey();
-            bids.add(((double)bid) / inflateFactor);
-//            System.out.println("bidding at " + );
-            bidOptions.add((Integer)bidPolicy.getValue());
-            budgetRemaining = budgetRemaining - bid;
+            bidPolicy.dMaxBid = ((double)bidPolicy.maxBid) / inflateFactor;
+            bids.add(bidPolicy);
+            budgetRemaining = budgetRemaining - bidPolicy.maxBid;
             bidPolicy = witness.get(budgetRemaining);
         }
     }

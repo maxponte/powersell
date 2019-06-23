@@ -8,50 +8,62 @@ public class BidService {
     double[] holdingPrices;
     int K;
     double earnings = 0.0;
-    double accountBalance = 0.0;
+    double accountBalance;
     int days = 0;
     DoubleRounder dr = new DoubleRounder(2);
-    BidService(int K) {
+    BidService(int K, double initalBalance) {
         holdings = new int[K];
         holdingPrices = new double[K];
         this.K = K;
-        System.out.println("day,earnings,today_earnings,account_balance");
+        System.out.println("day,n_trades,expected_today_earnings,today_earnings,total_earnings,account_balance");
+        accountBalance = initalBalance;
     }
-    double bidMultis(List<Double> bids, List<Integer> bidOptions, List<Spread> lampi) {
+    double bidMultis(List<BidPolicy> bids, List<Spread> lampi) {
         // buy on day N
         holdings = new int[K];
         holdingPrices = new double[K];
 //        System.out.println("n bids " + bids.size());
+        double todaysEarnings = 0.0;
+        double todaysExpectedEarnings = 0.0;
+        int nTrades = 0;
         for (int i = 0; i < bids.size(); i++) {
-            int kIdx = bidOptions.get(i) - 1;
-            double ourBid = bids.get(i);
+            BidPolicy bp = bids.get(i);
+            int kIdx = bp.optionID-1;
             double assetPrice = lampi.get(kIdx).dayAheadPrice;
 //            System.out.println("kIdx: " + kIdx + ", bidding " + ourBid + " against " + assetPrice);
-            if(ourBid >= assetPrice) {
+            if(bp.dMaxBid >= assetPrice) {
 //                System.out.println("we bought "+ i);
-                holdings[kIdx]++;
-                holdingPrices[kIdx] += assetPrice;
-                accountBalance -= assetPrice;
+//                holdings[kIdx]++;
+//                holdingPrices[kIdx] += assetPrice;
+                double actualPayoff = lampi.get(bp.optionID-1).realTimePrice - assetPrice;
+                todaysEarnings += actualPayoff;
+                todaysExpectedEarnings += bp.expectedPayoff;
+                nTrades++;
+//                System.out.println("traded " + i + " paying " + actualPayoff + " while expecting " + bp.expectedPayoff);
             }
         }
-        double todaysEarnings = 0.0;
-        // sell on day N+1
-        for (int i = 0; i < holdings.length; i++) {
-            if(holdings[i] > 0) {
-                // sell
-                double proceeds = holdings[i] * lampi.get(i).realTimePrice;
-//                System.out.println("we sold " + i + " and got paid "+ actualPayoff);
-                accountBalance += proceeds;
-                todaysEarnings += proceeds - holdingPrices[i];
-            }
-        }
+//        // sell on day N+1
+//        for (int i = 0; i < holdings.length; i++) {
+//            if(holdings[i] > 0) {
+//                // sell
+//                double proceeds = holdings[i] * lampi.get(i).realTimePrice;
+////                System.out.println("we sold " + i + " and got paid "+ actualPayoff);
+//                accountBalance += proceeds;
+//                todaysEarnings += proceeds - holdingPrices[i];
+//            }
+//        }
+        accountBalance += todaysEarnings;
         earnings += todaysEarnings;
         days++;
         System.out.print(days);
         System.out.print(",");
-        System.out.print(dr.round(earnings));
+        System.out.print(nTrades);
+        System.out.print(",");
+        System.out.print(dr.round(todaysExpectedEarnings));
         System.out.print(",");
         System.out.print(dr.round(todaysEarnings));
+        System.out.print(",");
+        System.out.print(dr.round(earnings));
         System.out.print(",");
         System.out.println(dr.round(accountBalance));
 //        System.out.println("next bid: " + Arrays.toString(bids));
