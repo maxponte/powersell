@@ -45,8 +45,11 @@ class History {
     }
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        int id = 1;
         for (OptionHistory oh : historyByOption) {
+            sb.append("id: " + id + "\n");
             sb.append(oh.toString());
+            id++;
         }
         return sb.toString();
     }

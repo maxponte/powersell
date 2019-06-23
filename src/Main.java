@@ -49,8 +49,7 @@ public class Main {
                             + line + "'");
         }
     }
-    static List<List<Spread>> readPrices(int K) {
-        String fileName = "/Users/ponte/Downloads/"+"da_rt_lmp_5021220.csv";
+    static List<List<Spread>> readPrices(int K, String fileName) {
         // This will reference one line at a time
         String line = null;
         List<List<Spread>> results = new ArrayList<>();
@@ -76,6 +75,7 @@ public class Main {
                 String[] s = line.split(",");
                 if(yesterdaysDayAhead[i] > 0.0) {
                     result.add(new Spread(Double.parseDouble(s[4]), yesterdaysDayAhead[i]));
+//                    result.add(new Spread(yesterdaysDayAhead[i], Double.parseDouble(s[4])));
                     if (result.size() == K) {
                         results.add(result);
                         result = new ArrayList<>();
@@ -102,37 +102,39 @@ public class Main {
         }
         return results;
     }
-    static void testTrader() {
-        int K = 24;
-        List<List<Spread>> prices = readPrices(K);
+//    static void testTrader() {
+//        int K = 24;
+//        List<List<Spread>> prices = readPrices(K);
+//        int t = 0;
+//        double rho = 0.005;
+//        Trader trader = new Trader(K, rho, 2000, 200);
+//        for(List<Spread> s : prices) {
+//            if(t < 290) {
+//                trader.observe(s);
+//                t++;
+//                continue;
+//            }
+////            trader.debug();
+////            break;
+//            trader.trade(t, s);
+//            t++;
+//            if(t > 1000) break;
+//        }
+//    }
+    static void testUCTrader(int K, double rho, int trainOffset, int testOffset, double startingBalance, int precision, String fileName) {
+        List<List<Spread>> prices = readPrices(K, fileName);
         int t = 0;
-        double rho = 0.005;
-        Trader trader = new Trader(K, rho, 2000, 200);
+        UnconstrainedTrader trader = new UnconstrainedTrader(K, rho, startingBalance, precision);
+        int x = 0;
         for(List<Spread> s : prices) {
-            if(t < 290) {
+            x++;
+            if(x < trainOffset) continue;
+            if(t < testOffset) {
                 trader.observe(s);
                 t++;
                 continue;
             }
-//            trader.debug();
-//            break;
-            trader.trade(t, s);
-            t++;
-            if(t > 1000) break;
-        }
-    }
-    static void testUCTrader() {
-        int K = 24;
-        List<List<Spread>> prices = readPrices(K);
-        int t = 0;
-        double rho = 0.000;
-        UnconstrainedTrader trader = new UnconstrainedTrader(K, rho, 2000, 200);
-        for(List<Spread> s : prices) {
-            if(t < 290) {
-                trader.observe(s);
-                t++;
-                continue;
-            }
+//            System.out.println(trader.h);
 //            trader.debug();
 //            break;
             trader.trade(t, s);
@@ -141,8 +143,19 @@ public class Main {
         }
     }
     public static void main(String[] args) {
+        int K = Integer.parseInt(args[0]);
+        double rho = Double.parseDouble(args[1]);
+        int trainOffset = Integer.parseInt(args[2]);
+        int testOffset = Integer.parseInt(args[3]);
+        double startingBalance = Double.parseDouble(args[4]);
+        int precision = Integer.parseInt(args[5]);
+        String fileName = args[6];
 //        testTrader();
-        testUCTrader();
+//        String fileName = "/Users/ponte/Downloads/"+"cleaned_physical_nodes.csv";
+//        String fileName = "/Users/ponte/Downloads/"+"da_rt_lmp_5021220.csv";
+//        double rho = 0.002;
+//        testUCTrader(24, rho, 100, 100, 200.0, 1, fileName);
+        testUCTrader(K, rho, trainOffset, testOffset, startingBalance, precision, fileName);
 //        testFileMap();
 //        String fileName = "/Users/ponte/dpds_data/all.csv";
 //        String outFileName = "/Users/ponte/dpds_data/fmt_all.csv";
