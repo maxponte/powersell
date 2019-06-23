@@ -53,8 +53,9 @@ public class UnconstrainedTrader {
         if(t > 1) {
             doubleBudget = bidsvc.bidMultis(bids, lampi);
         }
-        double inflateFactor = Math.pow(10, 2-precision);
-        int step = (int)dr.round(doubleBudget * inflateFactor, RoundingMode.DOWN);
+        double stepConversionFactor = Math.pow(10, precision);
+        int step = (int)dr.round(doubleBudget * stepConversionFactor, RoundingMode.DOWN);
+        double priceConversionFactor = Math.pow(10, precision);
 
         observe(lampi);
 
@@ -75,7 +76,7 @@ public class UnconstrainedTrader {
                 for (int l = 2; !d; l++) {
                     // k = K - n + 1
                     Double lam = h.getDayAhead(l, K - n + 1);
-                    if (lam*inflateFactor > bdg) {
+                    if (lam*priceConversionFactor > bdg) {
                         double payoff = h.getEstimatedPayoff(t, l - 1, K - n + 1);
                         if(l > 1) rhat.put(n, bdg, payoff);
                         else rhat.put(n, bdg, 0);
@@ -117,7 +118,6 @@ public class UnconstrainedTrader {
                         bp.optionID = K-n+1;
                         bp.expectedPayoff = rg;
                         witness.put(bdg, bp);
-//                        System.out.println("k");
                     }
                 }
             }
@@ -126,9 +126,13 @@ public class UnconstrainedTrader {
         bids = new ArrayList<>();
         int budgetRemaining = step;
 //        System.out.println(V);
+//        for(Integer br : witness.keySet()) {
+//            BidPolicy bidPolicy = witness.get(br);
+//            System.out.println("budget: " + br + ", bid: " + bidPolicy.maxBid + " for " + bidPolicy.optionID);
+//        }
         BidPolicy bidPolicy = witness.get(budgetRemaining);
         while(bidPolicy != null) {
-            bidPolicy.dMaxBid = ((double)bidPolicy.maxBid) / inflateFactor;
+            bidPolicy.dMaxBid = ((double)bidPolicy.maxBid) / priceConversionFactor;
             bids.add(bidPolicy);
             budgetRemaining = budgetRemaining - bidPolicy.maxBid;
             bidPolicy = witness.get(budgetRemaining);

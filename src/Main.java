@@ -129,7 +129,7 @@ public class Main {
         for(List<Spread> s : prices) {
             x++;
             if(x < trainOffset) continue;
-            if(t < testOffset) {
+            if(x+t < testOffset) {
                 trader.observe(s);
                 t++;
                 continue;
@@ -151,10 +151,16 @@ public class Main {
         int precision = Integer.parseInt(args[5]);
         String fileName = args[6];
 //        testTrader();
-//        String fileName = "/Users/ponte/Downloads/"+"cleaned_physical_nodes.csv";
-//        String fileName = "/Users/ponte/Downloads/"+"da_rt_lmp_5021220.csv";
+//        String fileName = "/Users/ponte/Downloads/cleaned_physical_nodes.csv";
+//        fileName = "/Users/ponte/Downloads/"+"da_rt_lmp_5021220.csv";
+//        K = 24;
+//        trainOffset = 0;
+//        testOffset = 290;
+//        startingBalance = 1000.0;
+//        precision = 0;
 //        double rho = 0.002;
 //        testUCTrader(24, rho, 100, 100, 200.0, 1, fileName);
+
         testUCTrader(K, rho, trainOffset, testOffset, startingBalance, precision, fileName);
 //        testFileMap();
 //        String fileName = "/Users/ponte/dpds_data/all.csv";
